@@ -13,31 +13,36 @@ test('Insert New Student into Database', async () => {
 
   const connection = await connectDB();
 
-  await connection.execute(
-    `INSERT INTO users
-    (student_id, first_name, last_name, email, password, confirm_password, birthdate, gender)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      studentId,
-      firstName,
-      lastName,
-      email,
-      password,
-      password,
-      birthdate,
-      gender
-    ]
-  );
+    await connection.execute(
+      `INSERT INTO users
+      (student_id, first_name, last_name, email, password, confirm_password, birthdate, gender)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        studentId,
+        firstName,
+        lastName,
+        email,
+        password,
+        password,
+        birthdate,
+        gender
+      ]
+    );
 
-  const [rows] = await connection.execute(
-    "SELECT * FROM users WHERE student_id = ?",
-    [studentId]
-  );
+    const [rows] = await connection.execute(
+      "SELECT * FROM users WHERE student_id = ?",
+      [studentId]
+    );
 
-  console.log(rows);
+    console.log(rows);
 
-  expect(rows.length).toBe(1);
-
-  await connection.end();
+    expect(rows.length).toBe(1);
+  } finally {
+    await connection.execute(
+      "DELETE FROM users WHERE student_id = ?",
+      [studentId]
+    );
+    await connection.end();
+  }
 
 });
