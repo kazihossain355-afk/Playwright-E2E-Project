@@ -12,13 +12,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: npm
 
-      - name: Verify required secrets are configured
+      - name: Verify required secrets
         env:
           TALTEK_API_TOKEN: ${{ secrets.TALTEK_API_TOKEN }}
           DB_HOST: ${{ secrets.DB_HOST }}
@@ -28,45 +31,47 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
         run: |
           missing=()
+
           [ -z "$TALTEK_API_TOKEN" ] && missing+=("TALTEK_API_TOKEN")
           [ -z "$DB_HOST" ] && missing+=("DB_HOST")
           [ -z "$DB_PORT" ] && missing+=("DB_PORT")
           [ -z "$DB_USER" ] && missing+=("DB_USER")
           [ -z "$DB_PASSWORD" ] && missing+=("DB_PASSWORD")
           [ -z "$DB_NAME" ] && missing+=("DB_NAME")
+
           if [ ${#missing[@]} -ne 0 ]; then
             echo "::error::Missing required repository secrets: ${missing[*]}"
-            echo "Add them under Settings > Secrets and variables > Actions > Repository secrets, then re-run this workflow."
             exit 1
           fi
-          echo "All required secrets are present."
+
+          echo "All required secrets are configured."
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
         env:
-          # TalTek QA application under test.
-          # Non-secret: falls back to https://qa.taltektc.com in code if unset,
-          # but is set explicitly here via a repo Variable for clarity.
-          TALTEK_BASE_URL: ${{ vars.TALTEK_BASE_URL }}
-          # Secret: bearer token required by tests/student_e2e.spec.js for the
-          # student update/verification API calls.
+          # Non-secret QA application URL
+          TALTEK_BASE_URL: https://qa.taltektc.com
+
+          # API secret
           TALTEK_API_TOKEN: ${{ secrets.TALTEK_API_TOKEN }}
-          # Secrets: MySQL connection used by tests/db/database.js, required by
-          # both tests/database_test.spec.js and tests/student_e2e.spec.js.
+
+          # Database secrets
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
+
         run: npx playwright test
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Playwright report
         if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
