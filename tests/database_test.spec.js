@@ -1,17 +1,19 @@
 const { test, expect } = require('@playwright/test');
 const { connectDB } = require('./db/database');
 
-test('Insert New Student into Database', async () => {
-
-  const studentId = 'TTC0178';
+test('Database test', async () => {
+  const studentId = 'TTC0225';
   const firstName = 'Kazi';
   const lastName = 'Hossain';
-  const email = 'kazi0178@test.com';
-  const password = 'Test123';
-  const birthdate = '1990-01-01';
-  const gender = 'male';
+  const email = 'taltek.e2e@example.com';
+  const password = 'E2ePass123';
+  const birthdate = '2000-01-01';
+  const gender = 'Male';
 
-  const connection = await connectDB();
+  let connection;
+
+  try {
+    connection = await connectDB();
 
     await connection.execute(
       `INSERT INTO users
@@ -30,19 +32,22 @@ test('Insert New Student into Database', async () => {
     );
 
     const [rows] = await connection.execute(
-      "SELECT * FROM users WHERE student_id = ?",
+      'SELECT * FROM users WHERE student_id = ?',
       [studentId]
     );
 
     console.log(rows);
 
     expect(rows.length).toBe(1);
-  } finally {
-    await connection.execute(
-      "DELETE FROM users WHERE student_id = ?",
-      [studentId]
-    );
-    await connection.end();
-  }
 
+  } finally {
+    if (connection) {
+      await connection.execute(
+        'DELETE FROM users WHERE student_id = ?',
+        [studentId]
+      );
+
+      await connection.end();
+    }
+  }
 });
