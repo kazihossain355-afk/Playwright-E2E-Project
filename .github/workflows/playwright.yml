@@ -26,7 +26,20 @@ jobs:
 
       - name: Run Playwright tests
         env:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          # TalTek QA application under test.
+          # Non-secret: falls back to https://qa.taltektc.com in code if unset,
+          # but is set explicitly here via a repo Variable for clarity.
+          TALTEK_BASE_URL: ${{ vars.TALTEK_BASE_URL }}
+          # Secret: bearer token required by tests/student_e2e.spec.js for the
+          # student update/verification API calls.
+          TALTEK_API_TOKEN: ${{ secrets.TALTEK_API_TOKEN }}
+          # Secrets: MySQL connection used by tests/db/database.js, required by
+          # both tests/database_test.spec.js and tests/student_e2e.spec.js.
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
         run: npx playwright test
 
       - uses: actions/upload-artifact@v4
